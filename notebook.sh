@@ -23,3 +23,6 @@ curl -X PUT "https://api.cloudflare.com/client/v4/zones/27be6cf860eca466a0b1cdca
 
 # Run the Jupyter notebook.
 docker run -d -p 80:8888 -v /data:/home/jovyan/work -e PASSWORD=forespell forespell/docker-notebook
+
+# Set a CloudWatch alarm that terminates the notebook server after 2 hours of inactivity.
+aws cloudwatch put-metric-alarm --alarm-name cpu-mon --alarm-description "Alarm when CPU is idle for 2 hours" --metric-name CPUUtilization --namespace AWS/EC2 --statistic Maximum --period 1800 --threshold 1 --comparison-operator LessThanThreshold  --dimensions "Name=InstanceId,Value=$EC2_INSTANCE_ID" --evaluation-periods 4 --alarm-actions arn:aws:swf:eu-west-1:422646463147:action/actions/AWS_EC2.InstanceId.Terminate/1.0 --unit Percent
