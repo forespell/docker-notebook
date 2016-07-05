@@ -22,7 +22,7 @@ REM Point notebook.forespell.com to the notebook server.
 curl -X PUT "https://api.cloudflare.com/client/v4/zones/27be6cf860eca466a0b1cdcadd719544/dns_records/1bbcf7bc8625624b9977c851cf38c409" -H "X-Auth-Email: devs@forespell.com" -H "X-Auth-Key: %CLOUDFLARE_API_KEY%" -H "Content-Type: application/json" --data "{\"id\":\"1bbcf7bc8625624b9977c851cf38c409\",\"type\":\"A\",\"name\":\"notebook.forespell.com\",\"content\":\"%EC2_INSTANCE_IP%\"}"
 
 REM Run the Jupyter notebook.
-docker run -d -p 80:8888 -v /data:/home/jovyan/work -e PASSWORD=%FORESPELL_NOTEBOOK_PASSWORD% forespell/docker-notebook
+docker run -d -p 80:8888 -v /data:/home/jovyan/work -e USE_HTTPS=yes -e PASSWORD=%FORESPELL_NOTEBOOK_PASSWORD% forespell/docker-notebook
 
 REM Set a CloudWatch alarm that terminates the notebook server after 2 hours of inactivity.
 aws cloudwatch put-metric-alarm --alarm-name cpu-mon --alarm-description "Alarm when CPU is idle for 2 hours" --metric-name CPUUtilization --namespace AWS/EC2 --statistic Maximum --period 1800 --threshold 1 --comparison-operator LessThanThreshold  --dimensions "Name=InstanceId,Value=%EC2_INSTANCE_ID%" --evaluation-periods 4 --alarm-actions arn:aws:swf:eu-west-1:422646463147:action/actions/AWS_EC2.InstanceId.Terminate/1.0 --unit Percent
