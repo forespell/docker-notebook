@@ -13,9 +13,10 @@ eval "$(docker-machine env supercomputer)"
 
 # Attach the persistent EBS volume to the instance.
 EC2_INSTANCE_ID="`docker-machine ssh supercomputer wget -q -O - http://instance-data/latest/meta-data/instance-id`"
-aws ec2 attach-volume --volume-id vol-15a6f9bf --instance-id $EC2_INSTANCE_ID --device /dev/xvdf --region us-east-1
+EBS_VOLUME_ID="`aws ec2 describe-volumes --query "Volumes[*].[VolumeId]" --filters Name=tag:Name,Values=docker-notebook --region us-east-1 --output text`"
+aws ec2 attach-volume --volume-id $EBS_VOLUME_ID --instance-id $EC2_INSTANCE_ID --device /dev/xvdf --region us-east-1
 docker-machine ssh supercomputer "sudo mkdir /data && sudo mount /dev/xvdf /data"
 
 # Run the Jupyter notebook.
 docker run -d -p 8888:8888 -v /data:/home/jovyan/work -e PASSWORD=forespell forespell/docker-notebook
-docker-machine ip
+docker-machine ip supercomputer

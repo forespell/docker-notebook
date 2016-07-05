@@ -1,11 +1,9 @@
 # Jupyter notebook data science stack
 
-Based on https://github.com/jupyter/docker-stacks.
-
 ## One-time setup
 
 1. Install the AWS CLI with `pip install awscli`.
-2. Create an EBS volume in the AWS console and use its volume id in notebook.[bat|sh].
+2. Create an EBS volume in the AWS console and give it the name `docker-notebook`.
 3. After creation, an EBS volume is a raw block volume. To create a file system on it, run `docker-machine ssh supercomputer sudo mkfs -t ext4 /dev/xvdf`.
 4. Don't forget to add an inbound rule to the `docker-notebook` security group in the AWS console to allow traffic from port 8888.
 
