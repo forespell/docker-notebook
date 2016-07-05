@@ -15,8 +15,11 @@ eval "$(docker-machine env supercomputer)"
 EC2_INSTANCE_ID="`docker-machine ssh supercomputer wget -q -O - http://instance-data/latest/meta-data/instance-id`"
 EBS_VOLUME_ID="`aws ec2 describe-volumes --query "Volumes[*].[VolumeId]" --filters "Name=tag:Name,Values=docker-notebook" --region eu-west-1 --output text`"
 aws ec2 attach-volume --volume-id $EBS_VOLUME_ID --instance-id $EC2_INSTANCE_ID --device /dev/xvdf --region eu-west-1
-docker-machine ssh supercomputer "sudo mkdir /data && sudo mount /dev/xvdf /data"
+docker-machine ssh supercomputer "sudo mkdir /data && sudo mount /dev/xvdf /data && sudo chmod a+w /data"
+
+# Point notebook.forespell.com to the notebook server.
+EC2_INSTANCE_IP="`docker-machine ip supercomputer`"
+curl -X PUT "https://api.cloudflare.com/client/v4/zones/27be6cf860eca466a0b1cdcadd719544/dns_records/1bbcf7bc8625624b9977c851cf38c409" -H "X-Auth-Email: devs@forespell.com" -H "X-Auth-Key: $CLOUDFLARE_API_KEY" -H "Content-Type: application/json" --data "{\"id\":\"1bbcf7bc8625624b9977c851cf38c409\",\"type\":\"A\",\"name\":\"notebook.forespell.com\",\"content\":\"$EC2_INSTANCE_IP\"}"
 
 # Run the Jupyter notebook.
-docker run -d -p 8888:8888 -v /data:/home/jovyan/work -e PASSWORD=forespell forespell/docker-notebook
-docker-machine ip supercomputer
+docker run -d -p 80:8888 -v /data:/home/jovyan/work -e PASSWORD=forespell forespell/docker-notebook
