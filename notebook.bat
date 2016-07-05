@@ -14,7 +14,7 @@ REM Activate the spot instance as our current docker machine.
 REM Attach the persistent EBS volume to the instance.
 @FOR /f "delims=" %%i in ('docker-machine ssh supercomputer wget -q -O - http://instance-data/latest/meta-data/instance-id') do SET EC2_INSTANCE_ID=%%i
 @FOR /f "delims=" %%i in ('aws ec2 describe-volumes --query "Volumes[*].[VolumeId]" --filters "Name=tag:Name,Values=docker-notebook" --region eu-west-1 --output text') do SET EBS_VOLUME_ID=%%i
-aws ec2 attach-volume --volume-id %EBS_VOLUME_ID% --instance-id %EC2_INSTANCE_ID% --device /dev/xvdf --region eu-west-1
+cmd /c aws ec2 attach-volume --volume-id %EBS_VOLUME_ID% --instance-id %EC2_INSTANCE_ID% --device /dev/xvdf --region eu-west-1
 docker-machine ssh supercomputer "sudo mkdir /data && sudo mount /dev/xvdf /data && sudo chmod a+w /data"
 
 REM Point notebook.forespell.com to the notebook server.
