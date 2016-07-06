@@ -29,7 +29,7 @@ EC2_INSTANCE_IP="`docker-machine ip supercomputer`"
 curl -X PUT "https://api.cloudflare.com/client/v4/zones/27be6cf860eca466a0b1cdcadd719544/dns_records/1bbcf7bc8625624b9977c851cf38c409" -H "X-Auth-Email: devs@forespell.com" -H "X-Auth-Key: $CLOUDFLARE_API_KEY" -H "Content-Type: application/json" --data "{\"id\":\"1bbcf7bc8625624b9977c851cf38c409\",\"type\":\"A\",\"name\":\"notebook.forespell.com\",\"content\":\"$EC2_INSTANCE_IP\"}"
 
 # Run the Jupyter notebook.
-docker run -d -p 80:8888 -v /data:/home/jovyan/work -e USE_HTTPS=no -e PASSWORD=$FORESPELL_NOTEBOOK_PASSWORD forespell/docker-notebook
+docker run -d -p 443:8888 -v /data:/home/jovyan/work -e USE_HTTPS=yes -e PASSWORD=$FORESPELL_NOTEBOOK_PASSWORD forespell/docker-notebook
 
 # Set a CloudWatch alarm that terminates the notebook server after 2 hours of inactivity.
 AWS_ACCOUNT_ID="`aws ec2 describe-security-groups --group-names default --query "SecurityGroups[0].OwnerId" --output text`"
