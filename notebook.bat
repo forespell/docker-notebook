@@ -5,6 +5,10 @@ REM Quit if the EBS volume is already attached or not available.
     EXIT /B
 )
 
+REM Remove any existing key pairs on AWS.
+docker-machine rm -f supercomputer
+cmd /c aws ec2 delete-key-pair --key-name supercomputer
+
 REM Create the EC2 spot instance.
 docker-machine create supercomputer ^
     --driver amazonec2 ^

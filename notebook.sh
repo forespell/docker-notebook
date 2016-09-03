@@ -5,6 +5,10 @@ if [ "$EBS_VOLUME_STATE" != "available" ]; then
     exit
 fi
 
+# Remove any existing key pairs on AWS.
+docker-machine rm -f supercomputer
+aws ec2 delete-key-pair --key-name supercomputer
+
 # Create the EC2 spot instance.
 docker-machine create supercomputer \
     --driver amazonec2 \
