@@ -1,40 +1,42 @@
-# Quit if the EBS volume is already attached or not available.
-EBS_VOLUME_STATE="`aws ec2 describe-volumes --query "Volumes[*].[State]" --filters "Name=tag:Name,Values=docker-notebook" --region eu-west-1 --output text`"
-if [ "$EBS_VOLUME_STATE" != "available" ]; then
-    echo Notebook server already running!
-    exit
-fi
+# Configuration parameters.
+MACHINE_NAME=supercomputer
+AWS_REGION=eu-west-1
+AWS_ZONE=a
+AWS_INSTANCE_TYPE=p2.xlarge
+AWS_SPOT_PRICE=1.0
+AWS_SECURITY_GROUP=default
+AWS_EFS_NAME=docker-notebook-fs
 
 # Remove any existing key pairs on AWS.
-docker-machine rm -f supercomputer
-aws ec2 delete-key-pair --key-name supercomputer
+docker-machine rm -f $MACHINE_NAME
+aws ec2 delete-key-pair --key-name $MACHINE_NAME
 
 # Create the EC2 spot instance.
-docker-machine create supercomputer \
+docker-machine create $MACHINE_NAME \
     --driver amazonec2 \
-    --amazonec2-region eu-west-1 \
-    --amazonec2-zone a \
-    --amazonec2-request-spot-instance \
-    --amazonec2-spot-price 1.0 \
-    --amazonec2-security-group docker-notebook \
-    --amazonec2-instance-type c4.4xlarge
+    --amazonec2-region $AWS_REGION \
+    --amazonec2-zone $AWS_ZONE \
+    --amazonec2-request-spot-instance ^
+    --amazonec2-spot-price $AWS_SPOT_PRICE \
+    --amazonec2-security-group $AWS_SECURITY_GROUP \
+    --amazonec2-instance-type $AWS_INSTANCE_TYPE
 
 # Activate the spot instance as our current docker machine.
-eval "$(docker-machine env supercomputer)"
+eval "$(docker-machine env $MACHINE_NAME)"
 
-# Attach the persistent EBS volume to the instance.
-EC2_INSTANCE_ID="`docker-machine ssh supercomputer wget -q -O - http://instance-data/latest/meta-data/instance-id`"
-EBS_VOLUME_ID="`aws ec2 describe-volumes --query "Volumes[*].[VolumeId]" --filters "Name=tag:Name,Values=docker-notebook" --region eu-west-1 --output text`"
-aws ec2 attach-volume --volume-id $EBS_VOLUME_ID --instance-id $EC2_INSTANCE_ID --device /dev/xvdf --region eu-west-1
-docker-machine ssh supercomputer "sudo mkdir /data && sudo mount /dev/xvdf /data && sudo chmod a+w /data"
+# Mount the EFS.
+AWS_EFS_ID="`aws efs describe-file-systems --region $AWS_REGION --output text | grep -Po 'fs-\w+(?=\s+available\s+$AWS_EFS_NAME)'`"
+AWS_EFS_URL=$AWS_REGION$AWS_ZONE.$AWS_EFS_ID.efs.$AWS_REGION.amazonaws.com
+docker-machine ssh $MACHINE_NAME "sudo apt-get install -y nfs-common && sudo mkdir /efs && sudo mount -t nfs4 -o nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2 $AWS_EFS_URL:/ /efs"
 
 # Point notebook.forespell.com to the notebook server.
-EC2_INSTANCE_IP="`docker-machine ip supercomputer`"
-curl -X PUT "https://api.cloudflare.com/client/v4/zones/27be6cf860eca466a0b1cdcadd719544/dns_records/1bbcf7bc8625624b9977c851cf38c409" -H "X-Auth-Email: devs@forespell.com" -H "X-Auth-Key: $CLOUDFLARE_API_KEY" -H "Content-Type: application/json" --data "{\"id\":\"1bbcf7bc8625624b9977c851cf38c409\",\"type\":\"A\",\"name\":\"notebook.forespell.com\",\"content\":\"$EC2_INSTANCE_IP\"}"
+AWS_EC2_INSTANCE_IP="`docker-machine ip $MACHINE_NAME`"
+curl -X PUT "https://api.cloudflare.com/client/v4/zones/27be6cf860eca466a0b1cdcadd719544/dns_records/1bbcf7bc8625624b9977c851cf38c409" -H "X-Auth-Email: devs@forespell.com" -H "X-Auth-Key: $CLOUDFLARE_API_KEY" -H "Content-Type: application/json" --data "{\"id\":\"1bbcf7bc8625624b9977c851cf38c409\",\"type\":\"A\",\"name\":\"notebook.forespell.com\",\"content\":\"$AWS_EC2_INSTANCE_IP\"}"
 
 # Run the Jupyter notebook.
-docker run -d -p 443:8888 -v /data:/home/jovyan/work -e USE_HTTPS=yes -e PASSWORD=$FORESPELL_NOTEBOOK_PASSWORD forespell/docker-notebook
+docker run -d -p 443:8888 -v /efs:/home/jovyan/work -e USE_HTTPS=yes -e PASSWORD=$FORESPELL_NOTEBOOK_PASSWORD forespell/docker-notebook
 
 # Set a CloudWatch alarm that terminates the notebook server after 2 hours of inactivity.
+AWS_EC2_INSTANCE_ID="`docker-machine ssh $MACHINE_NAME wget -q -O - http://instance-data/latest/meta-data/instance-id`"
 AWS_ACCOUNT_ID="`aws ec2 describe-security-groups --group-names default --query "SecurityGroups[0].OwnerId" --output text`"
-aws cloudwatch put-metric-alarm --alarm-name cpu-mon --alarm-description "Alarm when CPU is idle for 2 hours" --metric-name CPUUtilization --namespace AWS/EC2 --statistic Maximum --period 1800 --threshold 1 --comparison-operator LessThanThreshold  --dimensions "Name=InstanceId,Value=$EC2_INSTANCE_ID" --evaluation-periods 4 --alarm-actions arn:aws:swf:eu-west-1:$AWS_ACCOUNT_ID:action/actions/AWS_EC2.InstanceId.Terminate/1.0 --unit Percent
+aws cloudwatch put-metric-alarm --alarm-name cpu-mon --alarm-description "Alarm when CPU is idle for 2 hours" --metric-name CPUUtilization --namespace AWS/EC2 --statistic Maximum --period 1800 --threshold 1 --comparison-operator LessThanThreshold  --dimensions "Name=InstanceId,Value=$AWS_EC2_INSTANCE_ID" --evaluation-periods 4 --alarm-actions arn:aws:swf:$AWS_REGION:$AWS_ACCOUNT_ID:action/actions/AWS_EC2.InstanceId.Terminate/1.0 --unit Percent
