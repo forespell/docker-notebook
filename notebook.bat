@@ -17,7 +17,7 @@ docker-machine create supercomputer ^
     --amazonec2-request-spot-instance ^
     --amazonec2-spot-price 1.0 ^
     --amazonec2-security-group docker-notebook ^
-    --amazonec2-instance-type c4.4xlarge
+    --amazonec2-instance-type c4.large
 
 REM Activate the spot instance as our current docker machine.
 @FOR /f "tokens=*" %%i IN ('docker-machine env supercomputer') DO @%%i

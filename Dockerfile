@@ -2,9 +2,6 @@ FROM jupyter/datascience-notebook
 
 USER root
 
-# AWS EFS
-RUN apt-get install -yq nfs-common
-
 # XGBoost
 RUN conda install -y gcc && \
     cd /usr/local/src && mkdir xgboost && cd xgboost && \
