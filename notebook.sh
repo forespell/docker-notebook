@@ -1,8 +1,9 @@
 # Configuration parameters.
+# 36xCPU: c4.8xlarge, 1xGPU: p2.xlarge, 8xGPU: p2.8xlarge
 MACHINE_NAME=supercomputer
 AWS_REGION=eu-west-1
 AWS_ZONE=a
-AWS_INSTANCE_TYPE=p2.xlarge
+AWS_INSTANCE_TYPE=c4.8xlarge
 AWS_SPOT_PRICE=1.0
 AWS_SECURITY_GROUP=default
 AWS_EFS_NAME=docker-notebook-fs

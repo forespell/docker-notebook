@@ -1,8 +1,9 @@
 REM Configuration parameters.
+REM 36xCPU: c4.8xlarge, 1xGPU: p2.xlarge, 8xGPU: p2.8xlarge
 SET MACHINE_NAME=supercomputer
 SET AWS_REGION=eu-west-1
 SET AWS_ZONE=a
-SET AWS_INSTANCE_TYPE=p2.xlarge
+SET AWS_INSTANCE_TYPE=c4.8xlarge
 SET AWS_SPOT_PRICE=1.0
 SET AWS_SECURITY_GROUP=default
 SET AWS_EFS_NAME=docker-notebook-fs
