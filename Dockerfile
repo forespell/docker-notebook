@@ -2,6 +2,9 @@ FROM jupyter/datascience-notebook
 
 USER root
 
+# Update conda packages.
+RUN conda update --all -yes
+
 # XGBoost
 RUN conda install -y gcc && \
     cd /usr/local/src && mkdir xgboost && cd xgboost && \
