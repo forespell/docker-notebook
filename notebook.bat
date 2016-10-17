@@ -27,7 +27,7 @@ REM Activate the spot instance as our current docker machine.
 
 REM Mount the EFS.
 cmd /c aws efs describe-file-systems --region %AWS_REGION% --output text > tmp.txt
-@FOR /f "delims=" %%i in ("grep -Po 'fs-\w+(?=\s+available\s+%AWS_EFS_NAME%)' tmp.txt") do SET AWS_EFS_ID=%%i
+@FOR /f "delims=" %%i in ('grep -Po "fs-\w+(?=\s+available\s+%AWS_EFS_NAME%)" tmp.txt') do SET AWS_EFS_ID=%%i
 cmd /c rm tmp.txt
 SET AWS_EFS_URL=%AWS_REGION%%AWS_ZONE%.%AWS_EFS_ID%.efs.%AWS_REGION%.amazonaws.com
 docker-machine ssh %MACHINE_NAME% "sudo apt-get install -y nfs-common && sudo mkdir /efs && sudo mount -t nfs4 -o nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2 %AWS_EFS_URL%:/ /efs"
