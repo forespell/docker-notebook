@@ -3,7 +3,7 @@ FROM jupyter/datascience-notebook
 USER root
 
 # Update conda packages
-RUN conda update --all --yes
+RUN conda update --all --yes && conda install tqdm -c conda-forge -y
 
 # XGBoost
 RUN conda install -y gcc && \
