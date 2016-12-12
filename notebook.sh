@@ -2,9 +2,9 @@
 # 36xCPU: c4.8xlarge, 1xGPU: p2.xlarge, 8xGPU: p2.8xlarge
 MACHINE_NAME=supercomputer
 AWS_REGION=eu-west-1
-AWS_ZONE=a
+AWS_ZONE=b
 AWS_INSTANCE_TYPE=c4.8xlarge
-AWS_SPOT_PRICE=1.0
+AWS_SPOT_PRICE=3.0
 AWS_SECURITY_GROUP=default
 AWS_EFS_NAME=docker-notebook-fs
 
@@ -35,7 +35,7 @@ AWS_EC2_INSTANCE_IP="`docker-machine ip $MACHINE_NAME`"
 curl -X PUT "https://api.cloudflare.com/client/v4/zones/27be6cf860eca466a0b1cdcadd719544/dns_records/1bbcf7bc8625624b9977c851cf38c409" -H "X-Auth-Email: devs@forespell.com" -H "X-Auth-Key: $CLOUDFLARE_API_KEY" -H "Content-Type: application/json" --data "{\"id\":\"1bbcf7bc8625624b9977c851cf38c409\",\"type\":\"A\",\"name\":\"notebook.forespell.com\",\"content\":\"$AWS_EC2_INSTANCE_IP\"}"
 
 # Run the Jupyter notebook.
-docker run -d -p 443:8888 -v /efs:/home/jovyan/work -e USE_HTTPS=yes -e PASSWORD=$FORESPELL_NOTEBOOK_PASSWORD forespell/docker-notebook
+docker run -d -p 443:8888 -p 6006:6006 -v /efs:/home/jovyan/work -e USE_HTTPS=yes -e PASSWORD=$FORESPELL_NOTEBOOK_PASSWORD forespell/docker-notebook
 
 # Set a CloudWatch alarm that terminates the notebook server after 2 hours of inactivity.
 AWS_EC2_INSTANCE_ID="`docker-machine ssh $MACHINE_NAME wget -q -O - http://instance-data/latest/meta-data/instance-id`"

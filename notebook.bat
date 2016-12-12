@@ -2,9 +2,9 @@ REM Configuration parameters.
 REM 36xCPU: c4.8xlarge, 1xGPU: p2.xlarge, 8xGPU: p2.8xlarge
 SET MACHINE_NAME=supercomputer
 SET AWS_REGION=eu-west-1
-SET AWS_ZONE=a
+SET AWS_ZONE=b
 SET AWS_INSTANCE_TYPE=c4.8xlarge
-SET AWS_SPOT_PRICE=1.0
+SET AWS_SPOT_PRICE=3.0
 SET AWS_SECURITY_GROUP=default
 SET AWS_EFS_NAME=docker-notebook-fs
 
@@ -37,9 +37,9 @@ REM Point notebook.forespell.com to the notebook server.
 curl -X PUT "https://api.cloudflare.com/client/v4/zones/27be6cf860eca466a0b1cdcadd719544/dns_records/1bbcf7bc8625624b9977c851cf38c409" -H "X-Auth-Email: devs@forespell.com" -H "X-Auth-Key: %CLOUDFLARE_API_KEY%" -H "Content-Type: application/json" --data "{\"id\":\"1bbcf7bc8625624b9977c851cf38c409\",\"type\":\"A\",\"name\":\"notebook.forespell.com\",\"content\":\"%AWS_EC2_INSTANCE_IP%\"}"
 
 REM Run the Jupyter notebook.
-docker run -d -p 443:8888 -v /efs:/home/jovyan/work -e USE_HTTPS=yes -e PASSWORD=%FORESPELL_NOTEBOOK_PASSWORD% forespell/docker-notebook
+docker run -d -p 443:8888 -p 6006:6006 -v /efs:/home/jovyan/work -e USE_HTTPS=yes -e PASSWORD=%FORESPELL_NOTEBOOK_PASSWORD% forespell/docker-notebook
 
 REM Set a CloudWatch alarm that terminates the notebook server after 2 hours of inactivity.
 @FOR /f "delims=" %%i in ('docker-machine ssh %MACHINE_NAME% wget -q -O - http://instance-data/latest/meta-data/instance-id') do SET AWS_EC2_INSTANCE_ID=%%i
 @FOR /f "delims=" %%i in ('aws ec2 describe-security-groups --group-names default --query "SecurityGroups[0].OwnerId" --output text') do SET AWS_ACCOUNT_ID=%%i
-aws cloudwatch put-metric-alarm --alarm-name cpu-mon --alarm-description "Alarm when CPU is idle for 2 hours" --metric-name CPUUtilization --namespace AWS/EC2 --statistic Maximum --period 1800 --threshold 1 --comparison-operator LessThanThreshold  --dimensions "Name=InstanceId,Value=%AWS_EC2_INSTANCE_ID%" --evaluation-periods 4 --alarm-actions arn:aws:swf:%AWS_REGION%:%AWS_ACCOUNT_ID%:action/actions/AWS_EC2.InstanceId.Terminate/1.0 --unit Percent
+REM aws cloudwatch put-metric-alarm --alarm-name cpu-mon --alarm-description "Alarm when CPU is idle for 2 hours" --metric-name CPUUtilization --namespace AWS/EC2 --statistic Maximum --period 1800 --threshold 1 --comparison-operator LessThanThreshold  --dimensions "Name=InstanceId,Value=%AWS_EC2_INSTANCE_ID%" --evaluation-periods 4 --alarm-actions arn:aws:swf:%AWS_REGION%:%AWS_ACCOUNT_ID%:action/actions/AWS_EC2.InstanceId.Terminate/1.0 --unit Percent
