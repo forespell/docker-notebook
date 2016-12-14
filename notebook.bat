@@ -17,6 +17,7 @@ docker-machine create %MACHINE_NAME% ^
     --driver amazonec2 ^
     --amazonec2-region %AWS_REGION% ^
     --amazonec2-zone %AWS_ZONE% ^
+    --amazonec2-ami ami-21abf052 ^
     --amazonec2-request-spot-instance ^
     --amazonec2-spot-price %AWS_SPOT_PRICE% ^
     --amazonec2-security-group %AWS_SECURITY_GROUP% ^
