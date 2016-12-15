@@ -16,12 +16,12 @@ RUN conda install -y gcc && \
 RUN pip3 install https://storage.googleapis.com/tensorflow/linux/cpu/tensorflow-0.12.0rc1-cp35-cp35m-linux_x86_64.whl
 
 # Upgrade to C++-based protobuf for TensorFlow
-RUN sudo apt-get install -y autoconf automake libtool curl make g++ unzip && \
+RUN apt-get update && apt-get install -y autoconf automake libtool make g++ unzip && \
     git clone https://github.com/google/protobuf.git && \
     cd protobuf && ./autogen.sh && \
     CXXFLAGS="-fPIC -g -O2" ./configure && \
     make -j12 && export PROTOC=$PWD/src/protoc && \
     cd python && python setup.py bdist_wheel --cpp_implementation --compile_static_extension && \
-    pip3 uninstall protobuf && pip3 install dist/*.whl && cd ../../
+    pip3 uninstall -y protobuf && yes | pip3 install dist/*.whl && cd ../../
 
 USER $NB_USER
