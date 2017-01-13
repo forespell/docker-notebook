@@ -3,7 +3,7 @@ FROM jupyter/datascience-notebook
 USER root
 
 # Update conda packages
-RUN conda update --all --yes && conda install tqdm plotly -c conda-forge -y
+RUN conda update --all --yes && conda install tqdm plotly humanize -c conda-forge -y
 
 # XGBoost
 RUN conda install -y gcc && \
