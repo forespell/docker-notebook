@@ -3,7 +3,7 @@ FROM jupyter/datascience-notebook
 USER root
 
 # Update conda packages
-RUN conda update --all --no-channel-priority --yes && conda install tqdm plotly xlwt -c conda-forge -y
+RUN conda update --all --no-channel-priority --yes && conda install tqdm plotly xlwt xlsxwriter -c conda-forge -y
 
 # XGBoost
 RUN conda install -y gcc && \
