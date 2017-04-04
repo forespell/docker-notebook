@@ -7,7 +7,8 @@ This repo contains (1) a Dockerfile with Jupyter notebook data science stack who
 1. Install the AWS CLI with `pip install awscli`. Install your AWS credentials under `~/.aws/credentials`.
 2. Create an EFS in the region `eu-west-1` in the AWS console and give assign it the `Name`: `docker-notebook-fs`.
 3. Add an inbound rule to the `default` security group in the AWS console to allow traffic from port 443.
-4. Set the environment variables `CLOUDFLARE_API_KEY` and `FORESPELL_NOTEBOOK_PASSWORD`. On Linux, use `~/.bashrc`, on macOS use `~/.bash_profile` and on Windows use `setx`.
+4. Set the environment variable `CLOUDFLARE_API_KEY`. On Linux, use `~/.bashrc`, on macOS use `~/.bash_profile` and on Windows use `setx`.
+5. Use `IPython.lib.passwd()` to generate a hash of the notebook password, and update the `NOTEBOOK_PASSWORD` variable with it.
 
 ## Starting and stopping the notebook server
 
