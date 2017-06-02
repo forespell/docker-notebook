@@ -13,7 +13,7 @@ RUN conda install -y gcc && \
     make && cd python-package && python setup.py install && cd -
 
 # TensorFlow
-RUN pip3 install https://storage.googleapis.com/tensorflow/linux/cpu/tensorflow-1.0.0rc0-cp35-cp35m-linux_x86_64.whl
+RUN pip3 install https://storage.googleapis.com/tensorflow/linux/cpu/tensorflow-1.2.0-rc1-cp35-cp35m-linux_x86_64.whl
 
 # Upgrade to C++-based protobuf for TensorFlow
 RUN apt-get update && apt-get install -y autoconf automake libtool make g++ unzip && \
