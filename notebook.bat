@@ -3,7 +3,7 @@ REM 36xCPU: c4.8xlarge, 1xGPU: p2.xlarge, 8xGPU: p2.8xlarge
 SET MACHINE_NAME=supercomputer
 SET AWS_REGION=eu-west-1
 SET AWS_ZONE=b
-SET AWS_INSTANCE_TYPE=c4.8xlarge
+SET AWS_INSTANCE_TYPE=r4.8xlarge
 SET AWS_SPOT_PRICE=3.0
 SET AWS_SECURITY_GROUP=default
 SET AWS_EFS_NAME=docker-notebook-fs
@@ -18,11 +18,11 @@ docker-machine create %MACHINE_NAME% ^
     --driver amazonec2 ^
     --amazonec2-region %AWS_REGION% ^
     --amazonec2-zone %AWS_ZONE% ^
-    --amazonec2-ami ami-21abf052 ^
     --amazonec2-request-spot-instance ^
     --amazonec2-spot-price %AWS_SPOT_PRICE% ^
     --amazonec2-security-group %AWS_SECURITY_GROUP% ^
-    --amazonec2-instance-type %AWS_INSTANCE_TYPE%
+    --amazonec2-instance-type %AWS_INSTANCE_TYPE% ^
+    --engine-install-url=https://web.archive.org/web/20170623081500/https://get.docker.com
 
 REM Activate the spot instance as our current docker machine.
 @FOR /f "tokens=*" %%i IN ('docker-machine env %MACHINE_NAME%') DO @%%i
@@ -36,7 +36,7 @@ docker-machine ssh %MACHINE_NAME% "sudo apt-get install -y nfs-common && sudo mk
 
 REM Point notebook.forespell.com to the notebook server.
 @FOR /f "delims=" %%i in ('docker-machine ip %MACHINE_NAME%') do SET AWS_EC2_INSTANCE_IP=%%i
-curl -X PUT "https://api.cloudflare.com/client/v4/zones/27be6cf860eca466a0b1cdcadd719544/dns_records/1bbcf7bc8625624b9977c851cf38c409" -H "X-Auth-Email: devs@forespell.com" -H "X-Auth-Key: %CLOUDFLARE_API_KEY%" -H "Content-Type: application/json" --data "{\"id\":\"1bbcf7bc8625624b9977c851cf38c409\",\"type\":\"A\",\"name\":\"notebook.forespell.com\",\"content\":\"%AWS_EC2_INSTANCE_IP%\"}"
+REM curl -X PUT "https://api.cloudflare.com/client/v4/zones/27be6cf860eca466a0b1cdcadd719544/dns_records/1bbcf7bc8625624b9977c851cf38c409" -H "X-Auth-Email: devs@forespell.com" -H "X-Auth-Key: %CLOUDFLARE_API_KEY%" -H "Content-Type: application/json" --data "{\"id\":\"1bbcf7bc8625624b9977c851cf38c409\",\"type\":\"A\",\"name\":\"notebook.forespell.com\",\"content\":\"%AWS_EC2_INSTANCE_IP%\"}"
 
 REM Run the Jupyter notebook.
 docker run -d ^
